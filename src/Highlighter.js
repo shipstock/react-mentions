@@ -2,7 +2,12 @@ import React, { Component, Children } from 'react'
 import PropTypes from 'prop-types'
 import { defaultStyle } from './utils'
 
-import { iterateMentionsMarkup, mapPlainTextIndex, readConfigFromChildren, isNumber } from './utils'
+import {
+  iterateMentionsMarkup,
+  mapPlainTextIndex,
+  readConfigFromChildren,
+  isNumber,
+} from './utils'
 
 const _generateComponentKey = (usedKeys, id) => {
   if (!usedKeys.hasOwnProperty(id)) {
@@ -22,10 +27,16 @@ class Highlighter extends Component {
     containerRef: PropTypes.oneOfType([
       PropTypes.func,
       PropTypes.shape({
-        current: typeof Element === 'undefined' ? PropTypes.any : PropTypes.instanceOf(Element),
+        current:
+          typeof Element === 'undefined'
+            ? PropTypes.any
+            : PropTypes.instanceOf(Element),
       }),
     ]),
-    children: PropTypes.oneOfType([PropTypes.element, PropTypes.arrayOf(PropTypes.element)]).isRequired,
+    children: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.arrayOf(PropTypes.element),
+    ]).isRequired,
   }
 
   static defaultProps = {
@@ -67,13 +78,25 @@ class Highlighter extends Component {
   }
 
   render() {
-    const { selectionStart, selectionEnd, value, style, children, containerRef } = this.props
+    const {
+      selectionStart,
+      selectionEnd,
+      value,
+      style,
+      children,
+      containerRef,
+    } = this.props
     const config = readConfigFromChildren(children)
 
     // If there's a caret (i.e. no range selection), map the caret position into the marked up value
     let caretPositionInMarkup
     if (selectionStart === selectionEnd) {
-      caretPositionInMarkup = mapPlainTextIndex(value, config, selectionStart, 'START')
+      caretPositionInMarkup = mapPlainTextIndex(
+        value,
+        config,
+        selectionStart,
+        'START'
+      )
     }
 
     const resultComponents = []
@@ -92,10 +115,20 @@ class Highlighter extends Component {
       ) {
         // if yes, split substr at the caret position and insert the caret component
         const splitIndex = caretPositionInMarkup - index
-        components.push(this.renderSubstring(substr.substring(0, splitIndex), substringComponentKey))
+        components.push(
+          this.renderSubstring(
+            substr.substring(0, splitIndex),
+            substringComponentKey
+          )
+        )
 
         // add all following substrings and mention components as children of the caret component
-        components = [this.renderSubstring(substr.substring(splitIndex), substringComponentKey)]
+        components = [
+          this.renderSubstring(
+            substr.substring(splitIndex),
+            substringComponentKey
+          ),
+        ]
       } else {
         // otherwise just push the plain text substring
         components.push(this.renderSubstring(substr, substringComponentKey))
@@ -104,10 +137,20 @@ class Highlighter extends Component {
       substringComponentKey++
     }
 
-    const mentionIteratee = (markup, index, indexInPlainText, id, display, mentionChildIndex, lastMentionEndIndex) => {
+    const mentionIteratee = (
+      markup,
+      index,
+      indexInPlainText,
+      id,
+      display,
+      mentionChildIndex,
+      lastMentionEndIndex
+    ) => {
       // generate a component key based on the id
       const key = _generateComponentKey(componentKeys, id)
-      components.push(this.getMentionComponentForMatch(id, display, mentionChildIndex, key))
+      components.push(
+        this.getMentionComponentForMatch(id, display, mentionChildIndex, key)
+      )
     }
 
     iterateMentionsMarkup(value, config, mentionIteratee, textIteratee)
@@ -146,7 +189,11 @@ class Highlighter extends Component {
   // Renders an component to be inserted in the highlighter at the current caret position
   renderHighlighterCaret(children) {
     return (
-      <span {...this.props.style('caret')} ref={this.setCaretElement} key="caret">
+      <span
+        {...this.props.style('caret')}
+        ref={this.setCaretElement}
+        key="caret"
+      >
         {children}
       </span>
     )
@@ -157,7 +204,7 @@ class Highlighter extends Component {
   }
 }
 
-const styled = createUseStyle(
+const styled = defaultStyle(
   {
     position: 'relative',
     boxSizing: 'border-box',

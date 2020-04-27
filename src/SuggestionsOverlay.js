@@ -21,11 +21,17 @@ class SuggestionsOverlay extends Component {
     containerRef: PropTypes.oneOfType([
       PropTypes.func,
       PropTypes.shape({
-        current: typeof Element === 'undefined' ? PropTypes.any : PropTypes.instanceOf(Element),
+        current:
+          typeof Element === 'undefined'
+            ? PropTypes.any
+            : PropTypes.instanceOf(Element),
       }),
     ]),
 
-    children: PropTypes.oneOfType([PropTypes.element, PropTypes.arrayOf(PropTypes.element)]).isRequired,
+    children: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.arrayOf(PropTypes.element),
+    ]).isRequired,
   }
 
   static defaultProps = {
@@ -43,7 +49,9 @@ class SuggestionsOverlay extends Component {
     }
 
     const scrollTop = this.ulElement.scrollTop
-    let { top, bottom } = this.ulElement.children[this.props.focusIndex].getBoundingClientRect()
+    let { top, bottom } = this.ulElement.children[
+      this.props.focusIndex
+    ].getBoundingClientRect()
     const { top: topContainer } = this.ulElement.getBoundingClientRect()
     top = top - topContainer + scrollTop
     bottom = bottom - topContainer + scrollTop
@@ -56,7 +64,16 @@ class SuggestionsOverlay extends Component {
   }
 
   render() {
-    const { suggestions, isLoading, style, onMouseDown, containerRef, position, left, top } = this.props
+    const {
+      suggestions,
+      isLoading,
+      style,
+      onMouseDown,
+      containerRef,
+      position,
+      left,
+      top,
+    } = this.props
 
     // do not show suggestions until there is some data
     if (countSuggestions(suggestions) === 0 && !isLoading) {
@@ -64,7 +81,11 @@ class SuggestionsOverlay extends Component {
     }
 
     return (
-      <div {...inline(style, { position, left, top })} onMouseDown={onMouseDown} ref={containerRef}>
+      <div
+        {...inline(style, { position, left, top })}
+        onMouseDown={onMouseDown}
+        ref={containerRef}
+      >
         <ul ref={this.setUlElement} {...style('list')}>
           {this.renderSuggestions()}
         </ul>
@@ -78,7 +99,9 @@ class SuggestionsOverlay extends Component {
     return Object.values(this.props.suggestions).reduce(
       (accResults, { results, queryInfo }) => [
         ...accResults,
-        ...results.map((result, index) => this.renderSuggestion(result, queryInfo, accResults.length + index)),
+        ...results.map((result, index) =>
+          this.renderSuggestion(result, queryInfo, accResults.length + index)
+        ),
       ],
       []
     )
@@ -88,7 +111,9 @@ class SuggestionsOverlay extends Component {
     const id = getID(result)
     const isFocused = index === this.props.focusIndex
     const { childIndex, query } = queryInfo
-    const { renderSuggestion } = Children.toArray(this.props.children)[childIndex].props
+    const { renderSuggestion } = Children.toArray(this.props.children)[
+      childIndex
+    ].props
     const { ignoreAccents } = this.props
 
     return (
@@ -126,12 +151,12 @@ class SuggestionsOverlay extends Component {
     this.props.onSelect(suggestion, queryInfo)
   }
 
-  setUlElement = (el) => {
+  setUlElement = el => {
     this.ulElement = el
   }
 }
 
-const getID = (suggestion) => {
+const getID = suggestion => {
   if (suggestion instanceof String) {
     return suggestion
   }

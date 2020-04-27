@@ -6,7 +6,7 @@ const useStyle = createUseStyle({
   fontWeight: 'inherit',
 })
 
-const Mention = (props) => {
+const Mention = props => {
   const style = useStyle(props)
   const { display } = props
   return <strong {...style}>{display}</strong>
@@ -29,7 +29,10 @@ Mention.propTypes = {
 
   renderSuggestion: PropTypes.func,
 
-  trigger: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(RegExp)]),
+  trigger: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.instanceOf(RegExp),
+  ]),
   markup: PropTypes.string,
   displayTransform: PropTypes.func,
   /**

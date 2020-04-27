@@ -14,7 +14,8 @@ class Suggestion extends Component {
     suggestion: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.shape({
-        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+          .isRequired,
         display: PropTypes.string,
       }),
     ]).isRequired,
@@ -44,7 +45,13 @@ class Suggestion extends Component {
     let highlightedDisplay = this.renderHighlightedDisplay(display, query)
 
     if (renderSuggestion) {
-      return renderSuggestion(suggestion, query, highlightedDisplay, index, focused)
+      return renderSuggestion(
+        suggestion,
+        query,
+        highlightedDisplay,
+        index,
+        focused
+      )
     }
 
     return highlightedDisplay
@@ -85,11 +92,11 @@ class Suggestion extends Component {
   }
 }
 
-const styled = createUseStyle(
+const styled = defaultStyle(
   {
     cursor: 'pointer',
   },
-  (props) => ({ '&focused': props.focused })
+  props => ({ '&focused': props.focused })
 )
 
 export default styled(Suggestion)
