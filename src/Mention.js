@@ -1,14 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { defaultStyle } from 'substyle'
+import { createSubstyle } from 'substyle'
 
-const styled = defaultStyle({
+const styled = createSubstyle({
   fontWeight: 'inherit',
 })
 
-const Mention = styled(({ display, style }) => (
-  <strong {...style}>{display}</strong>
-))
+const Mention = styled(({ display, style }) => <strong {...style}>{display}</strong>)
 
 Mention.propTypes = {
   /**
@@ -27,10 +25,7 @@ Mention.propTypes = {
 
   renderSuggestion: PropTypes.func,
 
-  trigger: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.instanceOf(RegExp),
-  ]),
+  trigger: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(RegExp)]),
   markup: PropTypes.string,
   displayTransform: PropTypes.func,
   /**

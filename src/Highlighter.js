@@ -1,14 +1,8 @@
 import React, { Component, Children } from 'react'
 import PropTypes from 'prop-types'
-import { defaultStyle } from 'substyle'
+import { createSubstyle } from 'substyle'
 
-import {
-  iterateMentionsMarkup,
-  mapPlainTextIndex,
-  readConfigFromChildren,
-  isObjectEqual,
-  isNumber
-} from './utils'
+import { iterateMentionsMarkup, mapPlainTextIndex, readConfigFromChildren, isObjectEqual, isNumber } from './utils'
 
 const _generateComponentKey = (usedKeys, id) => {
   if (!usedKeys.hasOwnProperty(id)) {
@@ -29,10 +23,7 @@ class Highlighter extends Component {
     onCaretPositionChange: PropTypes.func.isRequired,
     inputStyle: PropTypes.object,
 
-    children: PropTypes.oneOfType([
-      PropTypes.element,
-      PropTypes.arrayOf(PropTypes.element),
-    ]).isRequired,
+    children: PropTypes.oneOfType([PropTypes.element, PropTypes.arrayOf(PropTypes.element)]).isRequired,
   }
 
   static defaultProps = {
@@ -84,12 +75,7 @@ class Highlighter extends Component {
     // If there's a caret (i.e. no range selection), map the caret position into the marked up value
     let caretPositionInMarkup
     if (selection.start === selection.end) {
-      caretPositionInMarkup = mapPlainTextIndex(
-        value,
-        config,
-        selection.start,
-        'START'
-      )
+      caretPositionInMarkup = mapPlainTextIndex(value, config, selection.start, 'START')
     }
 
     const resultComponents = []
@@ -108,20 +94,10 @@ class Highlighter extends Component {
       ) {
         // if yes, split substr at the caret position and insert the caret component
         const splitIndex = caretPositionInMarkup - index
-        components.push(
-          this.renderSubstring(
-            substr.substring(0, splitIndex),
-            substringComponentKey
-          )
-        )
+        components.push(this.renderSubstring(substr.substring(0, splitIndex), substringComponentKey))
 
         // add all following substrings and mention components as children of the caret component
-        components = [
-          this.renderSubstring(
-            substr.substring(splitIndex),
-            substringComponentKey
-          ),
-        ]
+        components = [this.renderSubstring(substr.substring(splitIndex), substringComponentKey)]
       } else {
         // otherwise just push the plain text substring
         components.push(this.renderSubstring(substr, substringComponentKey))
@@ -130,20 +106,10 @@ class Highlighter extends Component {
       substringComponentKey++
     }
 
-    const mentionIteratee = (
-      markup,
-      index,
-      indexInPlainText,
-      id,
-      display,
-      mentionChildIndex,
-      lastMentionEndIndex
-    ) => {
+    const mentionIteratee = (markup, index, indexInPlainText, id, display, mentionChildIndex, lastMentionEndIndex) => {
       // generate a component key based on the id
       const key = _generateComponentKey(componentKeys, id)
-      components.push(
-        this.getMentionComponentForMatch(id, display, mentionChildIndex, key)
-      )
+      components.push(this.getMentionComponentForMatch(id, display, mentionChildIndex, key))
     }
 
     iterateMentionsMarkup(value, config, mentionIteratee, textIteratee)
@@ -190,7 +156,7 @@ class Highlighter extends Component {
     return (
       <span
         {...this.props.style('caret')}
-        ref={el => {
+        ref={(el) => {
           this.caretRef = el
         }}
         key="caret"
@@ -201,7 +167,7 @@ class Highlighter extends Component {
   }
 }
 
-const styled = defaultStyle(
+const styled = createSubstyle(
   {
     position: 'relative',
     width: 'inherit',
@@ -221,7 +187,7 @@ const styled = defaultStyle(
       visibility: 'hidden',
     },
   },
-  props => ({
+  (props) => ({
     '&singleLine': props.singleLine,
   })
 )

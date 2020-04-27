@@ -1,6 +1,6 @@
 import React, { Component, Children } from 'react'
 import PropTypes from 'prop-types'
-import { defaultStyle } from 'substyle'
+import { createSubstyle } from 'substyle'
 
 import { countSuggestions } from './utils'
 import Suggestion from './Suggestion'
@@ -15,10 +15,7 @@ class SuggestionsOverlay extends Component {
     onSelect: PropTypes.func,
     ignoreAccents: PropTypes.bool,
 
-    children: PropTypes.oneOfType([
-      PropTypes.element,
-      PropTypes.arrayOf(PropTypes.element),
-    ]).isRequired,
+    children: PropTypes.oneOfType([PropTypes.element, PropTypes.arrayOf(PropTypes.element)]).isRequired,
   }
 
   static defaultProps = {
@@ -36,9 +33,7 @@ class SuggestionsOverlay extends Component {
     }
 
     const scrollTop = this.suggestionsRef.scrollTop
-    let { top, bottom } = this.suggestionsRef.children[
-      this.props.focusIndex
-    ].getBoundingClientRect()
+    let { top, bottom } = this.suggestionsRef.children[this.props.focusIndex].getBoundingClientRect()
     const { top: topContainer } = this.suggestionsRef.getBoundingClientRect()
     top = top - topContainer + scrollTop
     bottom = bottom - topContainer + scrollTop
@@ -61,7 +56,7 @@ class SuggestionsOverlay extends Component {
     return (
       <div {...style} onMouseDown={onMouseDown}>
         <ul
-          ref={el => {
+          ref={(el) => {
             this.suggestionsRef = el
           }}
           {...style('list')}
@@ -78,9 +73,7 @@ class SuggestionsOverlay extends Component {
     return Object.values(this.props.suggestions).reduce(
       (accResults, { results, queryInfo }) => [
         ...accResults,
-        ...results.map((result, index) =>
-          this.renderSuggestion(result, queryInfo, accResults.length + index)
-        ),
+        ...results.map((result, index) => this.renderSuggestion(result, queryInfo, accResults.length + index)),
       ],
       []
     )
@@ -90,9 +83,7 @@ class SuggestionsOverlay extends Component {
     const id = this.getID(result)
     const isFocused = index === this.props.focusIndex
     const { childIndex, query } = queryInfo
-    const { renderSuggestion } = Children.toArray(this.props.children)[
-      childIndex
-    ].props
+    const { renderSuggestion } = Children.toArray(this.props.children)[childIndex].props
     const { ignoreAccents } = this.props
 
     return (
@@ -139,7 +130,7 @@ class SuggestionsOverlay extends Component {
   }
 }
 
-const styled = defaultStyle(({ position }) => ({
+const styled = createSubstyle(({ position }) => ({
   position: 'absolute',
   zIndex: 1,
   backgroundColor: 'white',
