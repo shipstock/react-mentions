@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { createSubstyle } from 'substyle'
+import { createUseStyle } from 'substyle'
 
-const styled = createSubstyle({
+const styled = createUseStyle({
   fontWeight: 'inherit',
 })
 

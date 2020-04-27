@@ -1,6 +1,6 @@
 import React, { Component, Children } from 'react'
 import PropTypes from 'prop-types'
-import { createSubstyle } from 'substyle'
+import { createUseStyle } from 'substyle'
 
 import { iterateMentionsMarkup, mapPlainTextIndex, readConfigFromChildren, isObjectEqual, isNumber } from './utils'
 
@@ -167,7 +167,7 @@ class Highlighter extends Component {
   }
 }
 
-const styled = createSubstyle(
+const styled = createUseStyle(
   {
     position: 'relative',
     width: 'inherit',

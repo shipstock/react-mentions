@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { createSubstyle } from 'substyle'
+import { createUseStyle } from 'substyle'
 
 import { getSubstringIndex, keys, omit } from './utils'
 
@@ -81,7 +81,7 @@ class Suggestion extends Component {
   }
 }
 
-const styled = createSubstyle(
+const styled = createUseStyle(
   {
     cursor: 'pointer',
   },

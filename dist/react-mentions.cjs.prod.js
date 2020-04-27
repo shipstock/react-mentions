@@ -546,7 +546,7 @@ _defineProperty(Highlighter, "propTypes", {
   inputStyle: {}
 });
 
-var styled = substyle.createSubstyle({
+var styled = substyle.createUseStyle({
   position: "relative",
   width: "inherit",
   color: "transparent",
@@ -610,7 +610,7 @@ _defineProperty(Suggestion, "propTypes", {
   focused: PropTypes.bool
 });
 
-var styled$1 = substyle.createSubstyle({
+var styled$1 = substyle.createUseStyle({
   cursor: "pointer"
 }, function(props) {
   return {
@@ -745,7 +745,7 @@ _defineProperty(SuggestionsOverlay, "propTypes", {
   }
 });
 
-var styled$2 = substyle.createSubstyle(function(_ref2) {
+var styled$2 = substyle.createUseStyle(function(_ref2) {
   return _objectSpread$1({
     position: "absolute",
     zIndex: 1,
@@ -1202,7 +1202,7 @@ _defineProperty(MentionsInput, "propTypes", propTypes), _defineProperty(Mentions
 var getComputedStyleLengthProp = function(forElement, propertyName) {
   var length = parseFloat(window.getComputedStyle(forElement, null).getPropertyValue(propertyName));
   return isFinite(length) ? length : 0;
-}, isMobileSafari = "undefined" != typeof navigator && /iPhone|iPad|iPod/i.test(navigator.userAgent), styled$3 = substyle.createSubstyle({
+}, isMobileSafari = "undefined" != typeof navigator && /iPhone|iPad|iPod/i.test(navigator.userAgent), styled$3 = substyle.createUseStyle({
   position: "relative",
   overflowY: "visible",
   input: {
@@ -1235,7 +1235,7 @@ var getComputedStyleLengthProp = function(forElement, propertyName) {
     "&singleLine": singleLine,
     "&multiLine": !singleLine
   };
-}), MentionsInput$1 = styled$3(MentionsInput), styled$4 = substyle.createSubstyle({
+}), MentionsInput$1 = styled$3(MentionsInput), styled$4 = substyle.createUseStyle({
   fontWeight: "inherit"
 }), Mention = styled$4(function(_ref) {
   var display = _ref.display, style = _ref.style;

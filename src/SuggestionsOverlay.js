@@ -1,6 +1,6 @@
 import React, { Component, Children } from 'react'
 import PropTypes from 'prop-types'
-import { createSubstyle } from 'substyle'
+import { createUseStyle } from 'substyle'
 
 import { countSuggestions } from './utils'
 import Suggestion from './Suggestion'
@@ -130,7 +130,7 @@ class SuggestionsOverlay extends Component {
   }
 }
 
-const styled = createSubstyle(({ position }) => ({
+const styled = createUseStyle(({ position }) => ({
   position: 'absolute',
   zIndex: 1,
   backgroundColor: 'white',

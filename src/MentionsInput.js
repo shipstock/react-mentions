@@ -22,7 +22,7 @@ import Highlighter from './Highlighter'
 import PropTypes from 'prop-types'
 import ReactDOM from 'react-dom'
 import SuggestionsOverlay from './SuggestionsOverlay'
-import { createSubstyle } from 'substyle'
+import { createUseStyle } from 'substyle'
 
 export const makeTriggerRegex = function(trigger, options = {}) {
   if (trigger instanceof RegExp) {
@@ -863,7 +863,7 @@ const getComputedStyleLengthProp = (forElement, propertyName) => {
 
 const isMobileSafari = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent)
 
-const styled = createSubstyle(
+const styled = createUseStyle(
   {
     position: 'relative',
     overflowY: 'visible',
