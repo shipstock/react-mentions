@@ -11,7 +11,7 @@ import React, { Children, Component } from 'react';
 import invariant from 'invariant';
 import _slicedToArray from '@babel/runtime/helpers/esm/slicedToArray';
 import PropTypes from 'prop-types';
-import substyle, { defaultStyle } from 'substyle';
+import substyle, { createSubstyle } from 'substyle';
 import ReactDOM from 'react-dom';
 
 // escape RegExp special characters https://stackoverflow.com/a/9310752/5142490
@@ -843,7 +843,7 @@ _defineProperty(Highlighter, "defaultProps", {
   inputStyle: {}
 });
 
-var styled = defaultStyle({
+var styled = createSubstyle({
   position: 'relative',
   width: 'inherit',
   color: 'transparent',
@@ -950,7 +950,7 @@ _defineProperty(Suggestion, "propTypes", {
   focused: PropTypes.bool
 });
 
-var styled$1 = defaultStyle({
+var styled$1 = createSubstyle({
   cursor: 'pointer'
 }, function (props) {
   return {
@@ -1126,7 +1126,7 @@ _defineProperty(SuggestionsOverlay, "defaultProps", {
   }
 });
 
-var styled$2 = defaultStyle(function (_ref2) {
+var styled$2 = createSubstyle(function (_ref2) {
   var position = _ref2.position;
   return _objectSpread$1({
     position: 'absolute',
@@ -2034,7 +2034,7 @@ var getComputedStyleLengthProp = function getComputedStyleLengthProp(forElement,
 };
 
 var isMobileSafari = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
-var styled$3 = defaultStyle({
+var styled$3 = createSubstyle({
   position: 'relative',
   overflowY: 'visible',
   input: {
@@ -2070,7 +2070,7 @@ var styled$3 = defaultStyle({
 });
 var MentionsInput$1 = styled$3(MentionsInput);
 
-var styled$4 = defaultStyle({
+var styled$4 = createSubstyle({
   fontWeight: 'inherit'
 });
 var Mention = styled$4(function (_ref) {

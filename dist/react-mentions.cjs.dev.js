@@ -851,7 +851,7 @@ _defineProperty(Highlighter, "defaultProps", {
   inputStyle: {}
 });
 
-var styled = substyle.defaultStyle({
+var styled = substyle.createSubstyle({
   position: 'relative',
   width: 'inherit',
   color: 'transparent',
@@ -958,7 +958,7 @@ _defineProperty(Suggestion, "propTypes", {
   focused: PropTypes.bool
 });
 
-var styled$1 = substyle.defaultStyle({
+var styled$1 = substyle.createSubstyle({
   cursor: 'pointer'
 }, function (props) {
   return {
@@ -1134,7 +1134,7 @@ _defineProperty(SuggestionsOverlay, "defaultProps", {
   }
 });
 
-var styled$2 = substyle.defaultStyle(function (_ref2) {
+var styled$2 = substyle.createSubstyle(function (_ref2) {
   var position = _ref2.position;
   return _objectSpread$1({
     position: 'absolute',
@@ -2042,7 +2042,7 @@ var getComputedStyleLengthProp = function getComputedStyleLengthProp(forElement,
 };
 
 var isMobileSafari = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
-var styled$3 = substyle.defaultStyle({
+var styled$3 = substyle.createSubstyle({
   position: 'relative',
   overflowY: 'visible',
   input: {
@@ -2078,7 +2078,7 @@ var styled$3 = substyle.defaultStyle({
 });
 var MentionsInput$1 = styled$3(MentionsInput);
 
-var styled$4 = substyle.defaultStyle({
+var styled$4 = substyle.createSubstyle({
   fontWeight: 'inherit'
 });
 var Mention = styled$4(function (_ref) {
