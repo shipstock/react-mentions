@@ -17,9 +17,9 @@ var React = require('react');
 var React__default = _interopDefault(React);
 var invariant = _interopDefault(require('invariant'));
 var _slicedToArray = _interopDefault(require('@babel/runtime/helpers/slicedToArray'));
+var useStyle$1 = require('substyle');
+var useStyle$1__default = _interopDefault(useStyle$1);
 var PropTypes = _interopDefault(require('prop-types'));
-var substyle = require('substyle');
-var substyle__default = _interopDefault(substyle);
 var ReactDOM = _interopDefault(require('react-dom'));
 
 // escape RegExp special characters https://stackoverflow.com/a/9310752/5142490
@@ -624,29 +624,6 @@ var getSubstringIndex = function getSubstringIndex(str, substr, ignoreAccents) {
   return normalizeString(str).indexOf(normalizeString(substr));
 };
 
-var isObjectEqual = function isObjectEqual(obj1, obj2) {
-  if (!obj1 || !obj2) {
-    return false;
-  }
-
-  var keys1 = Object.keys(obj1);
-  var keys2 = Object.keys(obj2);
-
-  if (keys1.length !== keys2.length) {
-    return false;
-  }
-
-  for (var i = 0; i < keys1.length; i++) {
-    var key = keys1[i];
-
-    if (obj1[key] !== obj2[key]) {
-      return false;
-    }
-  }
-
-  return true;
-};
-
 var isNumber = function isNumber(val) {
   return typeof val === 'number';
 };
@@ -673,9 +650,24 @@ var omit = function omit(obj) {
   }, {});
 };
 
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+function createDefaultStyle(defaultStyle, getModifiers, getDependsOn) {
+  var enhance = function enhance(ComponentToWrap) {
+    var useStyle = useStyle$1.createUseStyle(defaultStyle, getModifiers, getDependsOn);
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+    var DefaultStyleEnhancer = function DefaultStyleEnhancer(props) {
+      var style = useStyle(props);
+      return React__default.createElement(ComponentToWrap, _extends({}, props, {
+        style: style
+      }));
+    };
+
+    var displayName = ComponentToWrap.displayName || ComponentToWrap.name || 'Component';
+    DefaultStyleEnhancer.displayName = "defaultStyle(".concat(displayName, ")");
+    return DefaultStyleEnhancer;
+  };
+
+  return enhance;
+}
 
 var _generateComponentKey = function _generateComponentKey(usedKeys, id) {
   if (!usedKeys.hasOwnProperty(id)) {
@@ -698,8 +690,14 @@ function (_Component) {
     _classCallCheck(this, Highlighter);
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(Highlighter).apply(this, arguments));
+
+    _defineProperty(_assertThisInitialized(_this), "setCaretElement", function (el) {
+      _this.caretElement = el;
+    });
+
     _this.state = {
-      lastPosition: {}
+      left: undefined,
+      top: undefined
     };
     return _this;
   }
@@ -717,24 +715,24 @@ function (_Component) {
   }, {
     key: "notifyCaretPosition",
     value: function notifyCaretPosition() {
-      if (!this.caretRef) {
+      if (!this.caretElement) {
         return;
       }
 
-      var position = {
-        left: this.caretRef.offsetLeft,
-        top: this.caretRef.offsetTop
+      var _this$caretElement = this.caretElement,
+          offsetLeft = _this$caretElement.offsetLeft,
+          offsetTop = _this$caretElement.offsetTop;
+
+      if (this.state.left === offsetLeft && this.state.top === offsetTop) {
+        return;
+      }
+
+      var newPosition = {
+        left: offsetLeft,
+        top: offsetTop
       };
-      var lastPosition = this.state.lastPosition;
-
-      if (isObjectEqual(lastPosition, position)) {
-        return;
-      }
-
-      this.setState({
-        lastPosition: position
-      });
-      this.props.onCaretPositionChange(position);
+      this.setState(newPosition);
+      this.props.onCaretPositionChange(newPosition);
     }
   }, {
     key: "render",
@@ -742,17 +740,18 @@ function (_Component) {
       var _this2 = this;
 
       var _this$props = this.props,
-          selection = _this$props.selection,
+          selectionStart = _this$props.selectionStart,
+          selectionEnd = _this$props.selectionEnd,
           value = _this$props.value,
           style = _this$props.style,
-          inputStyle = _this$props.inputStyle,
-          children = _this$props.children;
+          children = _this$props.children,
+          containerRef = _this$props.containerRef;
       var config = readConfigFromChildren(children); // If there's a caret (i.e. no range selection), map the caret position into the marked up value
 
       var caretPositionInMarkup;
 
-      if (selection.start === selection.end) {
-        caretPositionInMarkup = mapPlainTextIndex(value, config, selection.start, 'START');
+      if (selectionStart === selectionEnd) {
+        caretPositionInMarkup = mapPlainTextIndex(value, config, selectionStart, 'START');
       }
 
       var resultComponents = [];
@@ -794,7 +793,7 @@ function (_Component) {
       }
 
       return React__default.createElement("div", _extends({}, style, {
-        style: _objectSpread({}, inputStyle, {}, style.style)
+        ref: containerRef
       }), resultComponents);
     }
   }, {
@@ -821,12 +820,8 @@ function (_Component) {
   }, {
     key: "renderHighlighterCaret",
     value: function renderHighlighterCaret(children) {
-      var _this3 = this;
-
       return React__default.createElement("span", _extends({}, this.props.style('caret'), {
-        ref: function ref(el) {
-          _this3.caretRef = el;
-        },
+        ref: this.setCaretElement,
         key: "caret"
       }), children);
     }
@@ -836,28 +831,30 @@ function (_Component) {
 }(React.Component);
 
 _defineProperty(Highlighter, "propTypes", {
-  selection: PropTypes.shape({
-    start: PropTypes.number,
-    end: PropTypes.number
-  }).isRequired,
+  selectionStart: PropTypes.number,
+  selectionEnd: PropTypes.number,
   value: PropTypes.string.isRequired,
   onCaretPositionChange: PropTypes.func.isRequired,
-  inputStyle: PropTypes.object,
+  containerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({
+    current: typeof Element === 'undefined' ? PropTypes.any : PropTypes.instanceOf(Element)
+  })]),
   children: PropTypes.oneOfType([PropTypes.element, PropTypes.arrayOf(PropTypes.element)]).isRequired
 });
 
 _defineProperty(Highlighter, "defaultProps", {
-  value: '',
-  inputStyle: {}
+  value: ''
 });
 
-var styled = substyle.createUseStyle({
+var styled = createUseStyle({
   position: 'relative',
-  width: 'inherit',
+  boxSizing: 'border-box',
+  width: '100%',
   color: 'transparent',
   overflow: 'hidden',
   whiteSpace: 'pre-wrap',
   wordWrap: 'break-word',
+  border: '1px solid transparent',
+  textAlign: 'start',
   '&singleLine': {
     whiteSpace: 'pre',
     wordWrap: null
@@ -886,7 +883,8 @@ function (_Component) {
   _createClass(Suggestion, [{
     key: "render",
     value: function render() {
-      var rest = omit(this.props, 'style', keys(Suggestion.propTypes));
+      var rest = omit(this.props, ['style', 'classNames', 'className'], // substyle props
+      keys(Suggestion.propTypes));
       return React__default.createElement("li", _extends({}, rest, this.props.style), this.renderContent());
     }
   }, {
@@ -958,7 +956,7 @@ _defineProperty(Suggestion, "propTypes", {
   focused: PropTypes.bool
 });
 
-var styled$1 = substyle.createUseStyle({
+var styled$1 = createUseStyle({
   cursor: 'pointer'
 }, function (props) {
   return {
@@ -967,17 +965,11 @@ var styled$1 = substyle.createUseStyle({
 });
 var Suggestion$1 = styled$1(Suggestion);
 
-function LoadingIndicator(_ref) {
-  var style = _ref.style;
+function LoadingIndicator() {
+  var style = useStyle$1__default({});
   var spinnerStyle = style('spinner');
   return React__default.createElement("div", style, React__default.createElement("div", spinnerStyle, React__default.createElement("div", spinnerStyle(['element', 'element1'])), React__default.createElement("div", spinnerStyle(['element', 'element2'])), React__default.createElement("div", spinnerStyle(['element', 'element3'])), React__default.createElement("div", spinnerStyle(['element', 'element4'])), React__default.createElement("div", spinnerStyle(['element', 'element5']))));
 }
-
-var LoadingIndicator$1 = substyle__default(LoadingIndicator);
-
-function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$1(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$1(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 var SuggestionsOverlay =
 /*#__PURE__*/
@@ -985,57 +977,86 @@ function (_Component) {
   _inherits(SuggestionsOverlay, _Component);
 
   function SuggestionsOverlay() {
+    var _getPrototypeOf2;
+
+    var _this;
+
     _classCallCheck(this, SuggestionsOverlay);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(SuggestionsOverlay).apply(this, arguments));
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(SuggestionsOverlay)).call.apply(_getPrototypeOf2, [this].concat(args)));
+
+    _defineProperty(_assertThisInitialized(_this), "handleMouseEnter", function (index, ev) {
+      if (_this.props.onMouseEnter) {
+        _this.props.onMouseEnter(index);
+      }
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "select", function (suggestion, queryInfo) {
+      _this.props.onSelect(suggestion, queryInfo);
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "setUlElement", function (el) {
+      _this.ulElement = el;
+    });
+
+    return _this;
   }
 
   _createClass(SuggestionsOverlay, [{
     key: "componentDidUpdate",
     value: function componentDidUpdate() {
-      if (!this.suggestionsRef || this.suggestionsRef.offsetHeight >= this.suggestionsRef.scrollHeight || !this.props.scrollFocusedIntoView) {
+      if (!this.ulElement || this.ulElement.offsetHeight >= this.ulElement.scrollHeight || !this.props.scrollFocusedIntoView) {
         return;
       }
 
-      var scrollTop = this.suggestionsRef.scrollTop;
+      var scrollTop = this.ulElement.scrollTop;
 
-      var _this$suggestionsRef$ = this.suggestionsRef.children[this.props.focusIndex].getBoundingClientRect(),
-          top = _this$suggestionsRef$.top,
-          bottom = _this$suggestionsRef$.bottom;
+      var _this$ulElement$child = this.ulElement.children[this.props.focusIndex].getBoundingClientRect(),
+          top = _this$ulElement$child.top,
+          bottom = _this$ulElement$child.bottom;
 
-      var _this$suggestionsRef$2 = this.suggestionsRef.getBoundingClientRect(),
-          topContainer = _this$suggestionsRef$2.top;
+      var _this$ulElement$getBo = this.ulElement.getBoundingClientRect(),
+          topContainer = _this$ulElement$getBo.top;
 
       top = top - topContainer + scrollTop;
       bottom = bottom - topContainer + scrollTop;
 
       if (top < scrollTop) {
-        this.suggestionsRef.scrollTop = top;
-      } else if (bottom > this.suggestionsRef.offsetHeight) {
-        this.suggestionsRef.scrollTop = bottom - this.suggestionsRef.offsetHeight;
+        this.ulElement.scrollTop = top;
+      } else if (bottom > this.ulElement.offsetHeight) {
+        this.ulElement.scrollTop = bottom - this.ulElement.offsetHeight;
       }
     }
   }, {
     key: "render",
     value: function render() {
-      var _this = this;
-
       var _this$props = this.props,
           suggestions = _this$props.suggestions,
           isLoading = _this$props.isLoading,
           style = _this$props.style,
-          onMouseDown = _this$props.onMouseDown; // do not show suggestions until there is some data
+          onMouseDown = _this$props.onMouseDown,
+          containerRef = _this$props.containerRef,
+          position = _this$props.position,
+          left = _this$props.left,
+          top = _this$props.top; // do not show suggestions until there is some data
 
       if (countSuggestions(suggestions) === 0 && !isLoading) {
         return null;
       }
 
-      return React__default.createElement("div", _extends({}, style, {
-        onMouseDown: onMouseDown
+      return React__default.createElement("div", _extends({}, useStyle$1.inline(style, {
+        position: position,
+        left: left,
+        top: top
+      }), {
+        onMouseDown: onMouseDown,
+        ref: containerRef
       }), React__default.createElement("ul", _extends({
-        ref: function ref(el) {
-          _this.suggestionsRef = el;
-        }
+        ref: this.setUlElement
       }, style('list')), this.renderSuggestions()), this.renderLoadingIndicator());
     }
   }, {
@@ -1056,7 +1077,7 @@ function (_Component) {
     value: function renderSuggestion(result, queryInfo, index) {
       var _this3 = this;
 
-      var id = this.getID(result);
+      var id = getID(result);
       var isFocused = index === this.props.focusIndex;
       var childIndex = queryInfo.childIndex,
           query = queryInfo.query;
@@ -1081,36 +1102,15 @@ function (_Component) {
       });
     }
   }, {
-    key: "getID",
-    value: function getID(suggestion) {
-      if (suggestion instanceof String) {
-        return suggestion;
-      }
-
-      return suggestion.id;
-    }
-  }, {
     key: "renderLoadingIndicator",
     value: function renderLoadingIndicator() {
       if (!this.props.isLoading) {
         return;
       }
 
-      return React__default.createElement(LoadingIndicator$1, {
+      return React__default.createElement(LoadingIndicator, {
         style: this.props.style('loadingIndicator')
       });
-    }
-  }, {
-    key: "handleMouseEnter",
-    value: function handleMouseEnter(index, ev) {
-      if (this.props.onMouseEnter) {
-        this.props.onMouseEnter(index);
-      }
-    }
-  }, {
-    key: "select",
-    value: function select(suggestion, queryInfo) {
-      this.props.onSelect(suggestion, queryInfo);
     }
   }]);
 
@@ -1120,10 +1120,16 @@ function (_Component) {
 _defineProperty(SuggestionsOverlay, "propTypes", {
   suggestions: PropTypes.object.isRequired,
   focusIndex: PropTypes.number,
+  position: PropTypes.string,
+  left: PropTypes.number,
+  top: PropTypes.number,
   scrollFocusedIntoView: PropTypes.bool,
   isLoading: PropTypes.bool,
   onSelect: PropTypes.func,
   ignoreAccents: PropTypes.bool,
+  containerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({
+    current: typeof Element === 'undefined' ? PropTypes.any : PropTypes.instanceOf(Element)
+  })]),
   children: PropTypes.oneOfType([PropTypes.element, PropTypes.arrayOf(PropTypes.element)]).isRequired
 });
 
@@ -1134,27 +1140,31 @@ _defineProperty(SuggestionsOverlay, "defaultProps", {
   }
 });
 
-var styled$2 = substyle.createUseStyle(function (_ref2) {
-  var position = _ref2.position;
-  return _objectSpread$1({
-    position: 'absolute',
-    zIndex: 1,
-    backgroundColor: 'white',
-    marginTop: 14,
-    minWidth: 100
-  }, position, {
-    list: {
-      margin: 0,
-      padding: 0,
-      listStyleType: 'none'
-    }
-  });
+var getID = function getID(suggestion) {
+  if (suggestion instanceof String) {
+    return suggestion;
+  }
+
+  return suggestion.id;
+};
+
+var styled$2 = createDefaultStyle({
+  position: 'absolute',
+  zIndex: 1,
+  backgroundColor: 'white',
+  marginTop: 14,
+  minWidth: 100,
+  list: {
+    margin: 0,
+    padding: 0,
+    listStyleType: 'none'
+  }
 });
 var SuggestionsOverlay$1 = styled$2(SuggestionsOverlay);
 
-function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
-function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys$2(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys$2(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 var makeTriggerRegex = function makeTriggerRegex(trigger) {
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
@@ -1206,7 +1216,6 @@ var propTypes = {
    */
   singleLine: PropTypes.bool,
   allowSpaceInQuery: PropTypes.bool,
-  EXPERIMENTAL_cutCopyPaste: PropTypes.bool,
   allowSuggestionsAboveCursor: PropTypes.bool,
   ignoreAccents: PropTypes.bool,
   value: PropTypes.string,
@@ -1233,14 +1242,19 @@ function (_React$Component) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(MentionsInput).call(this, _props));
 
-    _defineProperty(_assertThisInitialized(_this), "getInputProps", function (isTextarea) {
+    _defineProperty(_assertThisInitialized(_this), "setContainerElement", function (el) {
+      _this.containerElement = el;
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "getInputProps", function () {
       var _this$props = _this.props,
           readOnly = _this$props.readOnly,
           disabled = _this$props.disabled,
-          style = _this$props.style; // pass all props that we don't use through to the input control
+          style = _this$props.style; // pass all props that neither we, nor substyle, consume through to the input control
 
-      var props = omit(_this.props, 'style', keys(propTypes));
-      return _objectSpread$2({}, props, {}, style('input'), {
+      var props = omit(_this.props, ['style', 'classNames', 'className'], // substyle props
+      keys(propTypes));
+      return _objectSpread({}, props, {}, style('input'), {
         value: _this.getPlainText()
       }, !readOnly && !disabled && {
         onChange: _this.handleChange,
@@ -1258,9 +1272,9 @@ function (_React$Component) {
           singleLine = _this$props2.singleLine,
           style = _this$props2.style;
 
-      var inputProps = _this.getInputProps(!singleLine);
+      var inputProps = _this.getInputProps();
 
-      return React__default.createElement("div", style('control'), _this.renderHighlighter(inputProps.style), singleLine ? _this.renderInput(inputProps) : _this.renderTextarea(inputProps));
+      return React__default.createElement("div", style('control'), _this.renderHighlighter(), singleLine ? _this.renderInput(inputProps) : _this.renderTextarea(inputProps));
     });
 
     _defineProperty(_assertThisInitialized(_this), "renderInput", function (props) {
@@ -1277,7 +1291,7 @@ function (_React$Component) {
     });
 
     _defineProperty(_assertThisInitialized(_this), "setInputRef", function (el) {
-      _this.inputRef = el;
+      _this.inputElement = el;
       var inputRef = _this.props.inputRef;
 
       if (typeof inputRef === 'function') {
@@ -1287,29 +1301,32 @@ function (_React$Component) {
       }
     });
 
+    _defineProperty(_assertThisInitialized(_this), "setSuggestionsElement", function (el) {
+      _this.suggestionsElement = el;
+    });
+
     _defineProperty(_assertThisInitialized(_this), "renderSuggestionsOverlay", function () {
       if (!isNumber(_this.state.selectionStart)) {
         // do not show suggestions when the input does not have the focus
         return null;
       }
 
+      var _this$state$suggestio = _this.state.suggestionsPosition,
+          position = _this$state$suggestio.position,
+          left = _this$state$suggestio.left,
+          top = _this$state$suggestio.top;
       var suggestionsNode = React__default.createElement(SuggestionsOverlay$1, {
         style: _this.props.style('suggestions'),
-        position: _this.state.suggestionsPosition,
+        position: position,
+        left: left,
+        top: top,
         focusIndex: _this.state.focusIndex,
         scrollFocusedIntoView: _this.state.scrollFocusedIntoView,
-        ref: function ref(el) {
-          _this.suggestionsRef = el;
-        },
+        containerRef: _this.setSuggestionsElement,
         suggestions: _this.state.suggestions,
         onSelect: _this.addMention,
         onMouseDown: _this.handleSuggestionsMouseDown,
-        onMouseEnter: function onMouseEnter(focusIndex) {
-          return _this.setState({
-            focusIndex: focusIndex,
-            scrollFocusedIntoView: false
-          });
-        },
+        onMouseEnter: _this.handleSuggestionsMouseEnter,
         isLoading: _this.isLoading(),
         ignoreAccents: _this.props.ignoreAccents
       }, _this.props.children);
@@ -1321,7 +1338,7 @@ function (_React$Component) {
       }
     });
 
-    _defineProperty(_assertThisInitialized(_this), "renderHighlighter", function (inputStyle) {
+    _defineProperty(_assertThisInitialized(_this), "renderHighlighter", function () {
       var _this$state = _this.state,
           selectionStart = _this$state.selectionStart,
           selectionEnd = _this$state.selectionEnd;
@@ -1331,23 +1348,24 @@ function (_React$Component) {
           value = _this$props3.value,
           style = _this$props3.style;
       return React__default.createElement(Highlighter$1, {
-        ref: function ref(el) {
-          _this.highlighterRef = el;
-        },
+        containerRef: _this.setHighlighterElement,
         style: style('highlighter'),
-        inputStyle: inputStyle,
         value: value,
         singleLine: singleLine,
-        selection: {
-          start: selectionStart,
-          end: selectionEnd
-        },
-        onCaretPositionChange: function onCaretPositionChange(position) {
-          return _this.setState({
-            caretPosition: position
-          });
-        }
+        selectionStart: selectionStart,
+        selectionEnd: selectionEnd,
+        onCaretPositionChange: _this.handleCaretPositionChange
       }, children);
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "setHighlighterElement", function (el) {
+      _this.highlighterElement = el;
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "handleCaretPositionChange", function (position) {
+      _this.setState({
+        caretPosition: position
+      });
     });
 
     _defineProperty(_assertThisInitialized(_this), "getPlainText", function () {
@@ -1435,7 +1453,7 @@ function (_React$Component) {
 
       if (isComposing) return; // refresh suggestions queries
 
-      var el = _this.inputRef;
+      var el = _this.inputElement;
 
       if (ev.target.selectionStart === ev.target.selectionEnd) {
         _this.updateMentionsQueries(el.value, ev.target.selectionStart);
@@ -1452,9 +1470,8 @@ function (_React$Component) {
     _defineProperty(_assertThisInitialized(_this), "handleKeyDown", function (ev) {
       // do not intercept key events if the suggestions overlay is not shown
       var suggestionsCount = countSuggestions(_this.state.suggestions);
-      var suggestionsComp = _this.suggestionsRef;
 
-      if (suggestionsCount === 0 || !suggestionsComp) {
+      if (suggestionsCount === 0 || !_this.suggestionsElement) {
         _this.props.onKeyDown(ev);
 
         return;
@@ -1563,18 +1580,25 @@ function (_React$Component) {
       _this._suggestionsMouseDown = true;
     });
 
+    _defineProperty(_assertThisInitialized(_this), "handleSuggestionsMouseEnter", function (focusIndex) {
+      _this.setState({
+        focusIndex: focusIndex,
+        scrollFocusedIntoView: false
+      });
+    });
+
     _defineProperty(_assertThisInitialized(_this), "updateSuggestionsPosition", function () {
       var caretPosition = _this.state.caretPosition;
       var _this$props5 = _this.props,
           suggestionsPortalHost = _this$props5.suggestionsPortalHost,
           allowSuggestionsAboveCursor = _this$props5.allowSuggestionsAboveCursor;
 
-      if (!caretPosition || !_this.suggestionsRef) {
+      if (!caretPosition || !_this.suggestionsElement) {
         return;
       }
 
-      var suggestions = ReactDOM.findDOMNode(_this.suggestionsRef);
-      var highlighter = ReactDOM.findDOMNode(_this.highlighterRef); // first get viewport-relative position (highlighter is offsetParent of caret):
+      var suggestions = _this.suggestionsElement;
+      var highlighter = _this.highlighterElement; // first get viewport-relative position (highlighter is offsetParent of caret):
 
       var caretOffsetParentRect = highlighter.getBoundingClientRect();
       var caretHeight = getComputedStyleLengthProp(highlighter, 'font-size');
@@ -1623,7 +1647,7 @@ function (_React$Component) {
         var _top = caretPosition.top - highlighter.scrollTop; // guard for mentions suggestions list clipped by right edge of window
 
 
-        if (_left + suggestions.offsetWidth > _this.containerRef.offsetWidth) {
+        if (_left + suggestions.offsetWidth > _this.containerElement.offsetWidth) {
           position.right = 0;
         } else {
           position.left = _left;
@@ -1639,7 +1663,7 @@ function (_React$Component) {
         }
       }
 
-      if (isObjectEqual(position, _this.state.suggestionsPosition)) {
+      if (position.left === _this.state.suggestionsPosition.left && position.top === _this.state.suggestionsPosition.top && position.position === _this.state.suggestionsPosition.position) {
         return;
       }
 
@@ -1649,14 +1673,15 @@ function (_React$Component) {
     });
 
     _defineProperty(_assertThisInitialized(_this), "updateHighlighterScroll", function () {
-      if (!_this.inputRef || !_this.highlighterRef) {
+      var input = _this.inputElement;
+      var highlighter = _this.highlighterElement;
+
+      if (!input || !highlighter) {
         // since the invocation of this function is deferred,
         // the whole component may have been unmounted in the meanwhile
         return;
       }
 
-      var input = _this.inputRef;
-      var highlighter = ReactDOM.findDOMNode(_this.highlighterRef);
       highlighter.scrollLeft = input.scrollLeft;
       highlighter.scrollTop = input.scrollTop;
       highlighter.height = input.height;
@@ -1672,7 +1697,7 @@ function (_React$Component) {
 
     _defineProperty(_assertThisInitialized(_this), "setSelection", function (selectionStart, selectionEnd) {
       if (selectionStart === null || selectionEnd === null) return;
-      var el = _this.inputRef;
+      var el = _this.inputElement;
 
       if (el.setSelectionRange) {
         el.setSelectionRange(selectionStart, selectionEnd);
@@ -1753,7 +1778,7 @@ function (_React$Component) {
       if (queryId !== _this._queryId) return; // save in property so that multiple sync state updates from different mentions sources
       // won't overwrite each other
 
-      _this.suggestions = _objectSpread$2({}, _this.suggestions, _defineProperty({}, childIndex, {
+      _this.suggestions = _objectSpread({}, _this.suggestions, _defineProperty({}, childIndex, {
         queryInfo: {
           childIndex: childIndex,
           query: query,
@@ -1798,7 +1823,7 @@ function (_React$Component) {
 
       var newValue = spliceString(value, start, end, insert); // Refocus input and set caret position to end of mention
 
-      _this.inputRef.focus();
+      _this.inputElement.focus();
 
       var displayValue = displayTransform(id, display);
 
@@ -1853,7 +1878,7 @@ function (_React$Component) {
       selectionEnd: null,
       suggestions: {},
       caretPosition: null,
-      suggestionsPosition: null
+      suggestionsPosition: {}
     };
     return _this;
   }
@@ -1861,14 +1886,9 @@ function (_React$Component) {
   _createClass(MentionsInput, [{
     key: "componentDidMount",
     value: function componentDidMount() {
-      var EXPERIMENTAL_cutCopyPaste = this.props.EXPERIMENTAL_cutCopyPaste;
-
-      if (EXPERIMENTAL_cutCopyPaste) {
-        document.addEventListener('copy', this.handleCopy);
-        document.addEventListener('cut', this.handleCut);
-        document.addEventListener('paste', this.handlePaste);
-      }
-
+      document.addEventListener('copy', this.handleCopy);
+      document.addEventListener('cut', this.handleCut);
+      document.addEventListener('paste', this.handlePaste);
       this.updateSuggestionsPosition();
     }
   }, {
@@ -1892,29 +1912,21 @@ function (_React$Component) {
   }, {
     key: "componentWillUnmount",
     value: function componentWillUnmount() {
-      var EXPERIMENTAL_cutCopyPaste = this.props.EXPERIMENTAL_cutCopyPaste;
-
-      if (EXPERIMENTAL_cutCopyPaste) {
-        document.removeEventListener('copy', this.handleCopy);
-        document.removeEventListener('cut', this.handleCut);
-        document.removeEventListener('paste', this.handlePaste);
-      }
+      document.removeEventListener('copy', this.handleCopy);
+      document.removeEventListener('cut', this.handleCut);
+      document.removeEventListener('paste', this.handlePaste);
     }
   }, {
     key: "render",
     value: function render() {
-      var _this2 = this;
-
       return React__default.createElement("div", _extends({
-        ref: function ref(el) {
-          _this2.containerRef = el;
-        }
+        ref: this.setContainerElement
       }, this.props.style), this.renderControl(), this.renderSuggestionsOverlay());
     }
   }, {
     key: "handlePaste",
     value: function handlePaste(event) {
-      if (event.target !== this.inputRef) {
+      if (event.target !== this.inputElement) {
         return;
       }
 
@@ -1937,7 +1949,7 @@ function (_React$Component) {
       var newValue = spliceString(value, markupStartIndex, markupEndIndex, pastedMentions || pastedData).replace(/\r/g, '');
       var newPlainTextValue = getPlainText(newValue, config);
       var eventMock = {
-        target: _objectSpread$2({}, event.target, {
+        target: _objectSpread({}, event.target, {
           value: newValue
         })
       };
@@ -1966,7 +1978,7 @@ function (_React$Component) {
   }, {
     key: "handleCopy",
     value: function handleCopy(event) {
-      if (event.target !== this.inputRef) {
+      if (event.target !== this.inputElement) {
         return;
       }
 
@@ -1980,7 +1992,7 @@ function (_React$Component) {
   }, {
     key: "handleCut",
     value: function handleCut(event) {
-      if (event.target !== this.inputRef) {
+      if (event.target !== this.inputElement) {
         return;
       }
 
@@ -2002,7 +2014,7 @@ function (_React$Component) {
       var newValue = [value.slice(0, markupStartIndex), value.slice(markupEndIndex)].join('');
       var newPlainTextValue = getPlainText(newValue, config);
       var eventMock = {
-        target: _objectSpread$2({}, event.target, {
+        target: _objectSpread({}, event.target, {
           value: newPlainTextValue
         })
       };
@@ -2042,24 +2054,24 @@ var getComputedStyleLengthProp = function getComputedStyleLengthProp(forElement,
 };
 
 var isMobileSafari = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
-var styled$3 = substyle.createUseStyle({
+var styled$3 = createUseStyle({
   position: 'relative',
   overflowY: 'visible',
   input: {
     display: 'block',
+    width: '100%',
     position: 'absolute',
+    margin: 0,
     top: 0,
     left: 0,
     boxSizing: 'border-box',
     backgroundColor: 'transparent',
-    width: 'inherit',
     fontFamily: 'inherit',
     fontSize: 'inherit',
     letterSpacing: 'inherit'
   },
   '&multiLine': {
-    input: _objectSpread$2({
-      width: '100%',
+    input: _objectSpread({
       height: '100%',
       bottom: 0,
       overflow: 'hidden',
@@ -2078,14 +2090,16 @@ var styled$3 = substyle.createUseStyle({
 });
 var MentionsInput$1 = styled$3(MentionsInput);
 
-var styled$4 = substyle.createUseStyle({
+var useStyle = useStyle$1.createUseStyle({
   fontWeight: 'inherit'
 });
-var Mention = styled$4(function (_ref) {
-  var display = _ref.display,
-      style = _ref.style;
+
+var Mention = function Mention(props) {
+  var style = useStyle(props);
+  var display = props.display;
   return React__default.createElement("strong", style, display);
-});
+};
+
 Mention.propTypes = {
   /**
    * Called when a new mention is added in the input
